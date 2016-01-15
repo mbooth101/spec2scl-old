@@ -12,8 +12,12 @@ class DTSTransformer(transformer.Transformer):
 
     @matches(r'^', one_line=False, sections=['%header'])
     def insert_dts_scl_init(self, original_spec, pattern, text):
-        scl_init = '%{{?scl:%scl_package {0}}}\n%{{!?scl:%global pkg_name %{{name}}}}\n%{{?java_common_find_provides_and_requires}}'.format(self.get_original_name(original_spec))
-        return '{0}\n\n{1}'.format(scl_init, text)
+        scl_init = '%{{?scl:%scl_package {0}}}\n%{{!?scl:%global pkg_name %{{name}}}}\n%{{?java_common_find_provides_and_requires}}\n'.format(self.get_original_name(original_spec))
+        return '{0}\n%global baserelease 0\n\n{1}'.format(scl_init, text)
+
+    @matches(r'^Release:', one_line=True, sections=settings.METAINFO_SECTIONS)
+    def insert_baserelease(self, original_spec, pattern, text):
+        return text.replace('%{?dist}', '.%{baserelease}%{?dist}', 1)
 
     @matches(r'^', one_line=False, sections=settings.RUNTIME_SECTIONS)
     def wrap_section_body(self, original_spec, pattern, text):
