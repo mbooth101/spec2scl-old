@@ -61,6 +61,16 @@ def main():
                      help='List of the packages/provides, that will be in the SCL (to convert Requires/BuildRequires properly).',
                      metavar='SCL_CONTENTS_LIST'
                      )
+    parser.add_argument('--list-file-maven',
+                        required=False,
+                        help='List of the packages/provides, that will be in the maven SCL (to convert Requires/BuildRequires properly).',
+                        metavar='MAVEN_SCL_CONTENTS_LIST'
+                        )
+    parser.add_argument('--list-file-java-common',
+                        required=False,
+                        help='List of the packages/provides, that will be in the java-common SCL (to convert Requires/BuildRequires properly).',
+                        metavar='JAVA_COMMON_SCL_CONTENTS_LIST'
+                        )
 
     args = parser.parse_args()
 
@@ -76,6 +86,8 @@ def main():
 
     try:
         scl_deps = handle_scl_deps(args.no_deps_convert, args.list_file)
+        scl_deps_maven = handle_scl_deps(args.no_deps_convert, args.list_file_maven)
+        scl_deps_java_common = handle_scl_deps(args.no_deps_convert, args.list_file_java_common)
     except IOError as e:
         print('Could not open file: {0}'.format(e))
         sys.exit(1)
@@ -98,6 +110,8 @@ def main():
 
     for spec in specs:
         options = {'scl_deps': scl_deps,
+                   'scl_deps_maven': scl_deps_maven,
+                   'scl_deps_java_common': scl_deps_java_common,
                    'meta_runtime_dep': args.meta_runtime_dep,
                    'skip_functions': args.skip_functions.split(','),
                    'variables': args.variables,

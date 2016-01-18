@@ -37,35 +37,21 @@ class DTSTransformer(transformer.Transformer):
         tag = text[0:text.find(':') + 1]
         deps = text[text.find(':') + 1:]
 
-        def handle_scl_deps(args_list_file):
-            scl_deps = True
-            if args_list_file:
-                scl_deps = []
-                with open(args_list_file) as l:
-                    for i in l.readlines():
-                        scl_deps.append(i.strip())
-            return scl_deps
-
-        try:
-            scl_deps = handle_scl_deps("/home/mbooth/DTS40/devtoolset-4-provides")
-            scl_java_common_deps = handle_scl_deps("/home/mbooth/DTS40/rh-java-common-provides")
-            scl_maven30_deps = handle_scl_deps("/home/mbooth/DTS40/maven30-provides")
-        except IOError as e:
-            print('Could not open file: {0}'.format(e))
-            sys.exit(1)
-
         # handle more Requires on one line
 
         def handle_one_dep(matchobj):
             groupdict = matchobj.groupdict('')
 
             scl_ignored_deps = ['java-headless', 'java-devel']
+            scl_deps = self.options['scl_deps']
+            scl_deps_maven = self.options['scl_deps_maven']
+            scl_deps_java_common = self.options['scl_deps_java_common']
 
             if scl_deps and groupdict['dep'] in scl_deps:
                 dep = '%{{?scl_prefix}}{0}'.format(groupdict['dep'])
-            elif scl_java_common_deps and groupdict['dep'] in scl_java_common_deps:
+            elif scl_deps_java_common and groupdict['dep'] in scl_deps_java_common:
                 dep = '%{{?scl_prefix_java_common}}{0}'.format(groupdict['dep'])
-            elif scl_maven30_deps and groupdict['dep'] in scl_maven30_deps:
+            elif scl_deps_maven and groupdict['dep'] in scl_deps_maven:
                 dep = '%{{?scl_prefix_maven}}{0}'.format(groupdict['dep'])
             else:
                 dep = groupdict['dep']
