@@ -23,6 +23,7 @@ class DTSTransformer(transformer.Transformer):
     def wrap_section_body(self, original_spec, pattern, text):
         head = text.splitlines(True)[0:1]
         head.append('%{?scl:scl enable %{scl_maven} %{scl} - << "EOF"}\n')
+        head.append('set -e -x\n')
         tail = text.splitlines(True)[1:]
         tail.append('\n%{?scl:EOF}\n')
         return ''.join(head + tail)
