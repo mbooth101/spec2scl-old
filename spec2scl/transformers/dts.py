@@ -37,32 +37,45 @@ class DTSTransformer(transformer.Transformer):
     def handle_req_buildreq(self, original_spec, pattern, text):
         tag = text[0:text.find(':') + 1]
         deps = text[text.find(':') + 1:]
-
         # handle more Requires on one line
 
         def handle_one_dep(matchobj):
             groupdict = matchobj.groupdict('')
 
+            # these deps are simply stripped
             scl_ignored_deps = ['java-headless', 'java-devel']
+            # these are high priority maven deps (they are considered ahead of java-common deps)
+            scl_hi_pri_maven_deps = ['javapackages-local', 'maven-local', 'ivy-local']
+            # these deps have a different name to Fedora and must be transformed
+            scl_dep_transforms = { 'objectweb-asm':'objectweb-asm5', 'mvn(org.ow2.asm:asm)':'mvn(org.ow2.asm:asm:5)', 'easymock':'easymock2', 'mvn(org.easymock:easymock)':'mvn(org.easymock:easymock:2.4)'}
+            # collection provides lists
             scl_deps = self.options['scl_deps']
             scl_deps_maven = self.options['scl_deps_maven']
             scl_deps_java_common = self.options['scl_deps_java_common']
 
-            if scl_deps and groupdict['dep'] in scl_deps:
-                dep = '%{{?scl_prefix}}{0}'.format(groupdict['dep'])
-            elif scl_deps_java_common and groupdict['dep'] in scl_deps_java_common:
-                dep = '%{{?scl_prefix_java_common}}{0}'.format(groupdict['dep'])
-            elif scl_deps_maven and groupdict['dep'] in scl_deps_maven:
-                dep = '%{{?scl_prefix_maven}}{0}'.format(groupdict['dep'])
-            else:
-                dep = groupdict['dep']
+            # do transformation first
+            transformed_dep = groupdict['dep']
+            if groupdict['dep'] in list(scl_dep_transforms.keys()):
+                transformed_dep = scl_dep_transforms[groupdict['dep']]
 
-            if scl_ignored_deps and groupdict['dep'] in scl_ignored_deps:
+            # then add collection-specific prefixes
+            if scl_deps and transformed_dep in scl_deps:
+                dep = '%{{?scl_prefix}}{0}'.format(transformed_dep)
+            elif scl_deps_maven and transformed_dep in scl_deps_maven and transformed_dep in scl_hi_pri_maven_deps:
+                dep = '%{{?scl_prefix_maven}}{0}'.format(transformed_dep)
+            elif scl_deps_java_common and transformed_dep in scl_deps_java_common:
+                dep = '%{{?scl_prefix_java_common}}{0}'.format(transformed_dep)
+            elif scl_deps_maven and transformed_dep in scl_deps_maven:
+                dep = '%{{?scl_prefix_maven}}{0}'.format(transformed_dep)
+            else:
+                dep = transformed_dep
+
+            if scl_ignored_deps and transformed_dep in scl_ignored_deps:
                 return None
             else:
                 return '{0}{1}{2}{3}'.format(groupdict['prespace'], dep, groupdict['ver'], groupdict['postspace'])
 
-        dep_re = re.compile(r'(?P<prespace>\s*)(?P<dep>([^\s]+(.+\))?))(?P<ver>\s*[<>=!]+\s*[^\s]+)?(?P<postspace>\s*)')
+        dep_re = re.compile(r'(?P<prespace>\s*)(?P<dep>([^\s,]+(.+\))?))(?P<ver>\s*[<>=!]+\s*[^\s]+)?(?P<postspace>,?\s*)')
         new_dep = dep_re.sub(handle_one_dep, deps)
         if new_dep:
             return tag + new_dep
