@@ -32,6 +32,28 @@ class DTSTransformer(transformer.Transformer):
     def eliminate_license_macro(self, original_spec, pattern, text):
         return text.replace('%license', '%doc', 1)
 
+    @matches(r'(Obsoletes:\s*)(?!\w*/\w*)([^\s]+)', sections=settings.METAINFO_SECTIONS)
+    @matches(r'(Provides:\s*)(?!\w*/\w*)([^\s]+)', sections=settings.METAINFO_SECTIONS)
+    def handle_req_provides(self, original_spec, pattern, text):
+        tag = text[0:text.find(':') + 1]
+        provs = text[text.find(':') + 1:]
+        # handle more Provides on one line
+
+        def handle_one_prov(matchobj):
+            groupdict = matchobj.groupdict('')
+            provide = groupdict['dep']
+            # prefix with scl name unless they begin with %{name} (in which case they are already prefixed)
+            if not provide.startswith('%{name}'):
+                provide = '%{{?scl_prefix}}{0}'.format(provide)
+            return '{0}{1}{2}{3}'.format(groupdict['prespace'], provide, groupdict['ver'], groupdict['postspace'])
+
+        prov_re = re.compile(r'(?P<prespace>\s*)(?P<dep>([^\s,]+(.+\))?))(?P<ver>\s*[<>=!]+\s*[^\s]+)?(?P<postspace>,?\s*)')
+        new_prov = prov_re.sub(handle_one_prov, provs)
+        if new_prov:
+            return tag + new_prov
+        else:
+            return ''
+
     @matches(r'(?<!d)(Requires:\s*)(?!\w*/\w*)([^[\s]+)', sections=settings.METAINFO_SECTIONS)
     @matches(r'(BuildRequires:\s*)(?!\w*/\w*)([^\s]+)', sections=settings.METAINFO_SECTIONS)
     def handle_req_buildreq(self, original_spec, pattern, text):
