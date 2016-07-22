@@ -69,7 +69,7 @@ class DTSTransformer(transformer.Transformer):
             # these are high priority maven deps (they are considered ahead of java-common deps)
             scl_hi_pri_maven_deps = ['javapackages-local', 'maven-local', 'ivy-local']
             # these deps have a different name to Fedora and must be transformed
-            scl_dep_transforms = { 'objectweb-asm':'objectweb-asm5', 'mvn(org.ow2.asm:asm)':'mvn(org.ow2.asm:asm:5)', 'mvn(org.ow2.asm:asm-analysis)':'mvn(org.ow2.asm:asm-analysis:5)', 'mvn(org.ow2.asm:asm-commons)':'mvn(org.ow2.asm:asm-commons:5)', 'mvn(org.ow2.asm:asm-tree)':'mvn(org.ow2.asm:asm-tree:5)', 'mvn(org.ow2.asm:asm-util)':'mvn(org.ow2.asm:asm-util:5)', 'mvn(org.ow2.asm:asm-xml)':'mvn(org.ow2.asm:asm-xml:5)', 'easymock':'easymock2', 'mvn(org.easymock:easymock)':'mvn(org.easymock:easymock:2.4)'}
+            scl_dep_transforms = { 'antlr':'antlr-tool', 'objectweb-asm':'objectweb-asm5', 'mvn(org.ow2.asm:asm)':'mvn(org.ow2.asm:asm:5)', 'mvn(org.ow2.asm:asm-analysis)':'mvn(org.ow2.asm:asm-analysis:5)', 'mvn(org.ow2.asm:asm-commons)':'mvn(org.ow2.asm:asm-commons:5)', 'mvn(org.ow2.asm:asm-tree)':'mvn(org.ow2.asm:asm-tree:5)', 'mvn(org.ow2.asm:asm-util)':'mvn(org.ow2.asm:asm-util:5)', 'mvn(org.ow2.asm:asm-xml)':'mvn(org.ow2.asm:asm-xml:5)', 'easymock':'easymock2', 'mvn(org.easymock:easymock)':'mvn(org.easymock:easymock:2.4)'}
             # collection provides lists
             scl_deps = self.options['scl_deps']
             scl_deps_maven = self.options['scl_deps_maven']
