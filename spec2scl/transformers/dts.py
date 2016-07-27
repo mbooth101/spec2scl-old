@@ -56,8 +56,11 @@ class DTSTransformer(transformer.Transformer):
 
     @matches(r'(?<!d)(Requires:\s*)(?!\w*/\w*)([^[\s]+)', sections=settings.METAINFO_SECTIONS)
     @matches(r'(BuildRequires:\s*)(?!\w*/\w*)([^\s]+)', sections=settings.METAINFO_SECTIONS)
+    @matches(r'(Recommends:\s*)(?!\w*/\w*)([^\s]+)', sections=settings.METAINFO_SECTIONS)
     def handle_req_buildreq(self, original_spec, pattern, text):
         tag = text[0:text.find(':') + 1]
+        if tag == 'Recommends:':
+            return ''
         deps = text[text.find(':') + 1:]
         # handle more Requires on one line
 
