@@ -48,10 +48,6 @@ class DTSTransformer(transformer.Transformer):
             new_text = re.sub(r'\b%s\b' % key, classpath_transforms[key], new_text)
         return new_text
 
-    @matches(r'^%license', one_line=True, sections=['%files'])
-    def eliminate_license_macro(self, original_spec, pattern, text):
-        return text.replace('%license', '%doc', 1)
-
     @matches(r'(Obsoletes:\s*)(?!\w*/\w*)([^\s]+)', sections=settings.METAINFO_SECTIONS)
     @matches(r'(Provides:\s*)(?!\w*/\w*)([^\s]+)', sections=settings.METAINFO_SECTIONS)
     def handle_req_provides(self, original_spec, pattern, text):
@@ -77,9 +73,12 @@ class DTSTransformer(transformer.Transformer):
     @matches(r'(?<!d)(Requires:\s*)(?!\w*/\w*)([^[\s]+)', sections=settings.METAINFO_SECTIONS)
     @matches(r'(BuildRequires:\s*)(?!\w*/\w*)([^\s]+)', sections=settings.METAINFO_SECTIONS)
     @matches(r'(Recommends:\s*)(?!\w*/\w*)([^\s]+)', sections=settings.METAINFO_SECTIONS)
+    @matches(r'(Enhances:\s*)(?!\w*/\w*)([^\s]+)', sections=settings.METAINFO_SECTIONS)
     def handle_req_buildreq(self, original_spec, pattern, text):
         tag = text[0:text.find(':') + 1]
         if tag == 'Recommends:':
+            return ''
+        if tag == 'Enhances:':
             return ''
         deps = text[text.find(':') + 1:]
         # handle more Requires on one line
@@ -88,14 +87,15 @@ class DTSTransformer(transformer.Transformer):
             groupdict = matchobj.groupdict('')
 
             # these deps are simply stripped
-            scl_ignored_deps = ['java-headless', 'java-devel', 'python3-autopep8', 'python3-pep8', 'python3-pylint', 'python3-django', 'python3-ipython-console', 'python3-rpm-macros', 'maven-checkstyle-plugin', 'vagrant']
+            scl_ignored_deps = ['java-headless', 'java-devel', 'python3-autopep8', 'python3-pep8', 'python3-pycodestyle', 'python3-pylint', 'python3-django', 'python3-ipython-console', 'python3-rpm-macros', 'maven-checkstyle-plugin', 'vagrant']
             # these are high priority maven deps (they are considered ahead of java-common deps)
             scl_hi_pri_maven_deps = ['javapackages-local', 'maven-local', 'ivy-local']
             # these deps have a different name to Fedora and must be transformed
-            scl_dep_transforms = {'maven-lib':'maven', 'python3':'python', 'antlr':'antlr-tool', 'javax.mail':'javamail', 'batik-css':'batik', 'hamcrest-core':'hamcrest', 'lucene3':'lucene5', 'log4j12':'log4j',
+            scl_dep_transforms = {'maven-lib':'maven', 'python3':'python', 'antlr':'antlr-tool', 'javax.mail':'javamail', 'batik-css':'batik', 'hamcrest-core':'hamcrest', 'log4j12':'log4j', 'mvn(io.tesla.tycho:tycho-support:pom:)':'tycho',
                     'mvn(cglib:cglib)':'mvn(cglib:cglib:3)', 'mvn(cglib:cglib-nodep)':'mvn(cglib:cglib-nodep:3)',
                     'objectweb-asm':'objectweb-asm5', 'mvn(org.ow2.asm:asm-all)':'mvn(org.ow2.asm:asm-all:5)', 'mvn(org.ow2.asm:asm)':'mvn(org.ow2.asm:asm:5)', 'mvn(org.ow2.asm:asm-analysis)':'mvn(org.ow2.asm:asm-analysis:5)', 'mvn(org.ow2.asm:asm-commons)':'mvn(org.ow2.asm:asm-commons:5)', 'mvn(org.ow2.asm:asm-tree)':'mvn(org.ow2.asm:asm-tree:5)', 'mvn(org.ow2.asm:asm-util)':'mvn(org.ow2.asm:asm-util:5)', 'mvn(org.ow2.asm:asm-xml)':'mvn(org.ow2.asm:asm-xml:5)',
                     'mvn(org.apache-extras.beanshell:bsh)':'mvn(org.beanshell:bsh)',
+                    'mvn(log4j:log4j:1.2.17)':'mvn(log4j:log4j)',
                     'easymock':'easymock2', 'mvn(org.easymock:easymock)':'mvn(org.easymock:easymock:2.4)'}
             # collection provides lists
             scl_deps = self.options['scl_deps']
